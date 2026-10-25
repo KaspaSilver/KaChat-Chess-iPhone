@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Kaspa Hub > Chess Online: choose your game. 1v1 or a tournament, each its own screen
-/// (`ChessTournamentsView`) with that kind's play tab and leaderboard. If the player is
+/// The Play tab: choose your game. 1v1 or a tournament, each its own screen
+/// (`ChessTournamentsView`). If the player is
 /// already waiting or playing somewhere, that is offered first.
 struct ChessHomeView: View {
     @ObservedObject private var service = ChessTournamentService.shared
@@ -66,7 +66,7 @@ struct ChessHomeView: View {
                 .padding(.bottom, 24)
             }
             .background(Color(.systemGroupedBackground))
-            .navigationTitle("Chess Online")
+            .navigationTitle("Play")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) { ConnectionStatusIndicator() }

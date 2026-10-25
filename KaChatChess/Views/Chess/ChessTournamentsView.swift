@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Chess Online > 1v1 or Tournaments: one kind of game per screen, chosen on ChessHomeView.
-/// Two tabs in the app's underline style: the play tab (a public room that pairs the next
-/// joiners or fills to eight, plus private games by code) and that kind's leaderboard. Every
-/// row reads from `ChessTournamentService`, which reduces the arena the moment a screen here is up.
+/// Play > 1v1 or Tournaments: one kind of game per screen, chosen on ChessHomeView. Tabs in
+/// the app's underline style: the play tab (a public room that pairs the next joiners or fills
+/// to eight, plus private games by code), Active and Finished. Every row reads from
+/// `ChessTournamentService`, which reduces the arena the moment a screen here is up.
 struct ChessTournamentsView: View {
     /// Which game: also the name of the play tab.
     enum Mode: String, CaseIterable, Identifiable {
@@ -11,9 +11,10 @@ struct ChessTournamentsView: View {
         case tournament = "Tournaments"
         var id: String { rawValue }
     }
-    enum Tab: CaseIterable { case play, activeGames, finished, leaderboard }
-    /// Both screens: play, Active (watch-only), Finished, Leaderboard.
-    private var tabs: [Tab] { [.play, .activeGames, .finished, .leaderboard] }
+    enum Tab: CaseIterable { case play, activeGames, finished }
+    /// Both screens: play, Active (watch-only), Finished. The leaderboards have a tab of their
+    /// own in the dock (`ChessLeaderboardTabView`).
+    private var tabs: [Tab] { [.play, .activeGames, .finished] }
 
     /// Fixed for the screen's life: this is the 1v1 screen or the Tournaments screen.
     let mode: Mode
@@ -58,8 +59,6 @@ struct ChessTournamentsView: View {
                     activeGamesSection
                 case .finished:
                     finishedSection
-                case .leaderboard:
-                    ChessLeaderboardRows(mode: mode)
                 }
             }
             .listStyle(.insetGrouped)
@@ -180,7 +179,6 @@ struct ChessTournamentsView: View {
         case .play: return mode.rawValue
         case .activeGames: return "Active"
         case .finished: return "Finished"
-        case .leaderboard: return "Leaderboard"
         }
     }
 

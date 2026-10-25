@@ -3980,7 +3980,7 @@ struct ChattingAddressManageView: View {
                 AddressDomainsTab(address: address)
             }
         }
-        .navigationTitle("Chatting Address")
+        .navigationTitle("Wallet")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showAddressActions) {
             addressActionsSheet

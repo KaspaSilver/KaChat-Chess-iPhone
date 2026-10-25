@@ -14,7 +14,7 @@ struct ContentView: View {
             case .loading:
                 LoadingView()
             case .mainApp:
-                MainTabView()
+                ChessMainTabView()
             case .onboarding:
                 OnboardingView()
             case .recovery:
