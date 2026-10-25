@@ -143,7 +143,7 @@ extension ChatService {
         // Wallet loaded + store ready: make sure the foreground contact sweep is running (no-op
         // if it already is). It self-gates on app-active and on the initial sync having finished,
         // so starting it here is safe on every startPolling() call, including tab re-entry.
-        startForegroundContactSweep()
+        if Self.syncsChats { startForegroundContactSweep() }
 
         // If initial sync already completed (e.g. Mac Catalyst window reopen),
         // just ensure subscription/polling is running — skip the heavy 4-phase sync.
@@ -191,10 +191,12 @@ extension ChatService {
 
             // Phase 1: Fetch handshakes first (needed to decrypt messages)
             // This is lightweight and establishes encryption keys
-            AppLog.log("[ChatService] Phase 1: Fetching handshakes...")
-            setInitialSyncPhase(.handshakes)
-            await fetchHandshakesOnly()
-            AppLog.log("[ChatService] Phase 1 complete")
+            if Self.syncsChats {
+                AppLog.log("[ChatService] Phase 1: Fetching handshakes...")
+                setInitialSyncPhase(.handshakes)
+                await fetchHandshakesOnly()
+                AppLog.log("[ChatService] Phase 1 complete")
+            }
 
             // Phase 2: Setup UTXO subscription for real-time updates
             AppLog.log("[ChatService] Phase 2: Setting up UTXO subscription...")
@@ -209,18 +211,22 @@ extension ChatService {
             // txId check) instead of recounting every historical message as unread from an empty
             // list - skipping this is exactly why previously-read chats once reappeared unread
             // after logout->login.
-            AppLog.log("[ChatService] Phase 3: Loading messages from local store...")
-            setInitialSyncPhase(.localStore)
-            await loadMessagesFromStoreIfNeeded(onlyIfEmpty: false)
-            AppLog.log("[ChatService] Phase 3 complete")
+            if Self.syncsChats {
+                AppLog.log("[ChatService] Phase 3: Loading messages from local store...")
+                setInitialSyncPhase(.localStore)
+                await loadMessagesFromStoreIfNeeded(onlyIfEmpty: false)
+                AppLog.log("[ChatService] Phase 3 complete")
+            }
 
             // Phase 4: Full indexer sync (diff-only writes to reduce DB churn)
             // NOTE: syncFromConversations() will preserve stored content and not
             // overwrite with placeholders thanks to the !isPlaceholder check
-            AppLog.log("[ChatService] Phase 4: Full indexer sync...")
-            setInitialSyncPhase(.indexer)
-            await fetchNewMessages()
-            AppLog.log("[ChatService] Phase 4 complete")
+            if Self.syncsChats {
+                AppLog.log("[ChatService] Phase 4: Full indexer sync...")
+                setInitialSyncPhase(.indexer)
+                await fetchNewMessages()
+                AppLog.log("[ChatService] Phase 4 complete")
+            }
 
             // After initial sync, enable notifications (they were suppressed during wallet import)
             suppressNotificationsUntilSynced = false

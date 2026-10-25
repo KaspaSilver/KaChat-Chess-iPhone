@@ -6,7 +6,7 @@ import SwiftUI
 struct ChessMainTabView: View {
     enum Tab: Hashable { case play, leaderboard, wallet, settings }
 
-    @EnvironmentObject private var walletManager: WalletManager
+    @EnvironmentObject private var chatService: ChatService
     @State private var selection: Tab = .play
 
     var body: some View {
@@ -23,6 +23,15 @@ struct ChessMainTabView: View {
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape.fill") }
                 .tag(Tab.settings)
+        }
+        .onAppear {
+            // What KaChat's dock did on appearing: connect to the node pool and subscribe to
+            // this address's coins (`ChatService.startPolling`; its chat phases are off, see
+            // `syncsChats`). A hold left from onboarding is lifted first, or nothing would start.
+            if chatService.onboardingSyncHeld {
+                chatService.releaseSyncForOnboarding()
+            }
+            chatService.startPolling()
         }
     }
 }

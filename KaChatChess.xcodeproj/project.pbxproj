@@ -7,16 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		KC0000000000000000000101 /* Opus.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = KC0000000000000000000100 /* Opus.xcframework */; };
 		KC0000000000000000000201 /* GRPC in Frameworks */ = {isa = PBXBuildFile; productRef = KC0000000000000000000200 /* GRPC */; };
 		KC0000000000000000000211 /* P256K in Frameworks */ = {isa = PBXBuildFile; productRef = KC0000000000000000000210 /* P256K */; };
 		KC0000000000000000000221 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = KC0000000000000000000220 /* SwiftProtobuf */; };
-		KC0000000000000000000231 /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = KC0000000000000000000230 /* WebRTC */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		KC0000000000000000000010 /* KaChatChess.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KaChatChess.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		KC0000000000000000000100 /* Opus.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; path = external/opus/Opus.xcframework; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -48,11 +45,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				KC0000000000000000000101 /* Opus.xcframework in Frameworks */,
 				KC0000000000000000000201 /* GRPC in Frameworks */,
 				KC0000000000000000000211 /* P256K in Frameworks */,
 				KC0000000000000000000221 /* SwiftProtobuf in Frameworks */,
-				KC0000000000000000000231 /* WebRTC in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -79,7 +74,6 @@
 		KC0000000000000000000020 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				KC0000000000000000000100 /* Opus.xcframework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -107,7 +101,6 @@
 				KC0000000000000000000200 /* GRPC */,
 				KC0000000000000000000210 /* P256K */,
 				KC0000000000000000000220 /* SwiftProtobuf */,
-				KC0000000000000000000230 /* WebRTC */,
 			);
 			productName = KaChatChess;
 			productReference = KC0000000000000000000010 /* KaChatChess.app */;
@@ -159,7 +152,6 @@
 				KC0000000000000000000300 /* XCRemoteSwiftPackageReference "grpc-swift" */,
 				KC0000000000000000000310 /* XCRemoteSwiftPackageReference "swift-secp256k1" */,
 				KC0000000000000000000320 /* XCRemoteSwiftPackageReference "swift-protobuf" */,
-				KC0000000000000000000330 /* XCRemoteSwiftPackageReference "WebRTC" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = KC0000000000000000000011 /* Products */;
@@ -288,8 +280,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = RP4Z22SFSD;
 				GENERATE_INFOPLIST_FILE = YES;
-				"HEADER_SEARCH_PATHS[sdk=iphoneos*]" = "$(SRCROOT)/external/opus/Opus.xcframework/ios-arm64/Headers";
-				"HEADER_SEARCH_PATHS[sdk=iphonesimulator*]" = "$(SRCROOT)/external/opus/Opus.xcframework/ios-arm64_x86_64-simulator/Headers";
 				INFOPLIST_FILE = KaChatChess/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "KaChat Chess";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.board-games";
@@ -307,9 +297,8 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG OPUS_BRIDGE $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "KaChatChess/KaChatChess-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -326,8 +315,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = RP4Z22SFSD;
 				GENERATE_INFOPLIST_FILE = YES;
-				"HEADER_SEARCH_PATHS[sdk=iphoneos*]" = "$(SRCROOT)/external/opus/Opus.xcframework/ios-arm64/Headers";
-				"HEADER_SEARCH_PATHS[sdk=iphonesimulator*]" = "$(SRCROOT)/external/opus/Opus.xcframework/ios-arm64_x86_64-simulator/Headers";
 				INFOPLIST_FILE = KaChatChess/Resources/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "KaChat Chess";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.board-games";
@@ -345,9 +332,8 @@
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "OPUS_BRIDGE $(inherited)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_OBJC_BRIDGING_HEADER = "KaChatChess/KaChatChess-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -401,14 +387,6 @@
 				version = 1.38.1;
 			};
 		};
-		KC0000000000000000000330 /* XCRemoteSwiftPackageReference "WebRTC" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/stasel/WebRTC.git";
-			requirement = {
-				kind = exactVersion;
-				version = 153.0.0;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -426,11 +404,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = KC0000000000000000000320 /* XCRemoteSwiftPackageReference "swift-protobuf" */;
 			productName = SwiftProtobuf;
-		};
-		KC0000000000000000000230 /* WebRTC */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = KC0000000000000000000330 /* XCRemoteSwiftPackageReference "WebRTC" */;
-			productName = WebRTC;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

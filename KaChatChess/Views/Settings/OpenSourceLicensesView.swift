@@ -1,8 +1,7 @@
 import SwiftUI
 
-/// The notices the libraries KaChat ships ask to travel with it. Opus and WebRTC (BSD-3)
-/// require their notice in the binary's documentation; the Apache and MIT ones ask for
-/// attribution. Plain scrolling text, one card per library.
+/// The notices the libraries KaChat Chess ships ask to travel with it: the Apache and MIT
+/// ones ask for attribution. Plain scrolling text, one card per library.
 struct OpenSourceLicensesView: View {
     @Environment(\.dismiss) private var dismiss
 
@@ -13,16 +12,6 @@ struct OpenSourceLicensesView: View {
         let holder: String
         let text: String
     }
-
-    private static let bsd3 = """
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""
 
     private static let apache2 = """
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
@@ -41,8 +30,6 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 """
 
     private static let notices: [Notice] = [
-        Notice(id: "opus", name: "Opus", license: "BSD 3-Clause", holder: "Copyright 2001-2011 Xiph.Org, Skype Limited, Octasic, Jean-Marc Valin, Timothy B. Terriberry, CSIRO, Gregory Maxwell, Mark Borgerding, Erik de Castro Lopo", text: bsd3),
-        Notice(id: "webrtc", name: "WebRTC", license: "BSD 3-Clause", holder: "Copyright (c) 2011, The WebRTC project authors. All rights reserved.", text: bsd3),
         Notice(id: "grpc-swift", name: "grpc-swift", license: "Apache License 2.0", holder: "Copyright 2015-2024, gRPC Authors", text: apache2),
         Notice(id: "swift-protobuf", name: "SwiftProtobuf", license: "Apache License 2.0", holder: "Copyright 2014-2024 Apple Inc. and the SwiftProtobuf project authors", text: apache2),
         Notice(id: "swift-nio", name: "SwiftNIO, swift-crypto, swift-log and the Swift Server ecosystem packages", license: "Apache License 2.0", holder: "Copyright 2017-2024 Apple Inc. and the SwiftNIO project authors", text: apache2),
@@ -53,7 +40,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("KaChat is built with these open source libraries. Their authors ask that these notices travel with the app.")
+                    Text("KaChat Chess is built with these open source libraries. Their authors ask that these notices travel with the app.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     ForEach(Self.notices) { notice in

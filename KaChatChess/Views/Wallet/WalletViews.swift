@@ -551,7 +551,7 @@ private struct ChattingAddressPrivateKeyView: View {
                 Spacer()
             }
             .padding()
-            .navigationTitle("Chatting Address")
+            .navigationTitle("Your Address")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -618,7 +618,7 @@ private struct ChattingAddressPublicKeyView: View {
                     Label("Safe to share", systemImage: "checkmark.seal.fill")
                         .font(.headline)
                         .foregroundColor(.accentColor)
-                    Text("This is the public half of your chatting address. It identifies you and cannot spend anything.")
+                    Text("This is the public half of your address. It identifies you and cannot spend anything.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -687,7 +687,7 @@ private struct ChattingAddressPublicKeyView: View {
 struct ChattingAddressQRView: View {
     let address: String
     let balanceSompi: UInt64?
-    var subtitle: String = "This address should be for chatting and domains only. 1 Kaspa is enough for about 500 interactions in the app. Domains cost from 35 to 4,000 Kaspa, depending on the name."
+    var subtitle: String = "Every move you play is a Kaspa transaction from this address, about 0.0017 KAS each: 1 KAS covers about 500 moves."
 
     @State private var qrImage: UIImage?
     @State private var toastMessage: String?

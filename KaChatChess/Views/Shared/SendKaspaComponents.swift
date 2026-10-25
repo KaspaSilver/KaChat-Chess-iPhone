@@ -692,7 +692,7 @@ struct SendFromSection: View {
                 .textCase(.uppercase)
             if !isLocked {
                 HStack(spacing: 10) {
-                    SelectablePill(title: "Chatting Address", selected: source == .chatting) {
+                    SelectablePill(title: "Your Address", selected: source == .chatting) {
                         source = .chatting
                     }
                     SelectablePill(title: "Choose an Address", selected: source != .chatting) {
@@ -737,7 +737,7 @@ struct SendFromSection: View {
 
     private var title: String {
         switch source {
-        case .chatting: return AppLocalization.string("Chatting Address")
+        case .chatting: return AppLocalization.string("Your Address")
         case .spending(_, _, let label): return label
         }
     }
@@ -763,8 +763,8 @@ struct OwnAddressPicker: View {
         NavigationStack {
             List {
                 if let chatting = WalletManager.shared.currentWallet {
-                    Section("Chatting Address") {
-                        row(title: AppLocalization.string("Chatting Address"), address: chatting.publicAddress,
+                    Section("Your Address") {
+                        row(title: AppLocalization.string("Your Address"), address: chatting.publicAddress,
                             balance: chatting.balanceSompi) { .chatting }
                     }
                 }

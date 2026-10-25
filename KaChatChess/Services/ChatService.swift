@@ -36,6 +36,11 @@ enum CatchUpSyncTrigger: String {
 
 @MainActor
 final class ChatService: ObservableObject {
+    /// KaChat Chess has no chats: the initial sync skips KaChat's 1:1 phases (handshakes, the
+    /// message store, the indexer message sync) and the foreground contact sweep, and keeps the
+    /// UTXO subscription - the balance and the coins each move spends come from it.
+    static let syncsChats = false
+
     static let shared = ChatService()
 
     @Published var conversations: [Conversation] = [] {
