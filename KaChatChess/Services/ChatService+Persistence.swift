@@ -559,9 +559,7 @@ extension ChatService {
             lastPushReregisterAt = nil
         }
 
-        // Deferred: refreshPushReliabilityPrerequisites() accesses PushNotificationManager.shared,
-        // which in turn accesses ChatService.shared.$conversations during its init.
-        // Running synchronously here would cause a circular static-init crash.
+        // Deferred, as in KaChat (where it reached a push manager that read ChatService.shared).
         Task { @MainActor [weak self] in
             self?.refreshPushReliabilityPrerequisites()
         }
@@ -586,12 +584,8 @@ extension ChatService {
         let settings = currentSettings
         guard settings.notificationMode == .remotePush else { return false }
 
-        let pushManager = PushNotificationManager.shared
-        let status = pushManager.permissionStatus
-        guard status == .authorized || status == .provisional else { return false }
-        guard pushManager.isRegistered else { return false }
-
-        return true
+        // KaChat Chess registers for no pushes: the push channel is never up.
+        return false
     }
 
     func refreshPushReliabilityPrerequisites() {
@@ -791,7 +785,6 @@ extension ChatService {
 
         lastPushReregisterAt = now
         persistPushReliabilityState()
-        await PushNotificationManager.shared.forceReregister(reason: reason)
     }
 
     func syncConversationContacts(with contacts: [Contact]) {
@@ -1177,7 +1170,7 @@ extension ChatService {
         let totalUnread = conversations.reduce(0) { total, conversation in
             guard isConversationVisibleInChatList(conversation) else { return total }
             return total + max(0, conversation.unreadCount)
-        } + GroupChatService.shared.totalGroupUnreadCount
+        }
         SharedDataManager.setUnreadCount(totalUnread)
         if #available(iOS 16.0, *) {
             UNUserNotificationCenter.current().setBadgeCount(totalUnread)
@@ -1460,9 +1453,6 @@ extension ChatService {
         }
         if let updatedData = try? JSONEncoder().encode(conversationAliasUpdatedAt) {
             userDefaults.set(updatedData, forKey: conversationAliasUpdatedAtKey)
-        }
-        Task {
-            await PushNotificationManager.shared.updateWatchedAddresses()
         }
     }
 

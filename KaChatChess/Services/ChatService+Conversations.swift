@@ -22,9 +22,6 @@ extension ChatService {
             guard let self, self.activeConversationAddress == address else { return }
             await self.fetchNewMessages(forActiveOnly: address)
         }
-        // Nextcloud mirror runs on an adaptive cadence keyed off the open chat; wake its
-        // change watcher so this chat picks up other devices' uploads immediately.
-        NextcloudService.shared.noteChatOpened()
         loadReactions(for: address)
         // Keep the Share Extension's "Recent" list fresh: opening a chat counts as touching it.
         let alias = ContactsManager.shared.displayName(for: address)
@@ -308,12 +305,6 @@ extension ChatService {
                 // app-foreground catch-up. Run the cursor-based group catch-up at most once a
                 // minute while the app is active so an open app converges on missed group
                 // messages without needing a background/foreground cycle.
-                if UIApplication.shared.applicationState == .active,
-                   WalletManager.shared.currentWallet != nil,
-                   self.lastForegroundGroupCatchUpAt.map({ Date().timeIntervalSince($0) >= self.foregroundGroupCatchUpInterval }) ?? true {
-                    self.lastForegroundGroupCatchUpAt = Date()
-                    await GroupChatService.shared.performCatchUpSync()
-                }
                 try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
             }
         }
@@ -2157,7 +2148,7 @@ extension ChatService {
 
         var merged: [UTXO] = []
         var seenOutpoints = Set<String>()
-        for utxo in KaPostsScheduledStore.filterReserved(pendingSpendable + confirmedSpendable) {
+        for utxo in pendingSpendable + confirmedSpendable {
             let key = outpointKey(utxo.outpoint)
             guard reservedMessageOutpoints[key] == nil else { continue }
             guard seenOutpoints.insert(key).inserted else { continue }
@@ -2566,18 +2557,8 @@ extension ChatService {
             // chat about it right after (`sendSpendingPaymentNotice`): the payee has never seen
             // that address, so a chat payment from it would open a stranger's Message Request on
             // their side instead of landing in this chat (XP-022).
-            // A tip: the same sealed note, inside a signed payload that names the post.
-            var tipPayload: Data?
-            if let tip {
-                let sealed = try KasiaTransactionBuilder.sealedPaymentHex(message: note, amount: amountSompi, recipientPublicKey: recipientPublicKey)
-                let pubkey = try KaPostsAPIClient.shared.requesterPubkey()
-                let signature = try WalletManager.shared.signArbitraryMessage(
-                    KaPostsProtocol.tipSigningString(postId: tip.postId, authorPubkey: tip.authorPubkey, sealedHex: sealed),
-                    mode: .kaspaPersonalMessage
-                )
-                tipPayload = Data(KaPostsProtocol.tipPayload(pubkey: pubkey, signature: signature, postId: tip.postId,
-                                                             authorPubkey: tip.authorPubkey, sealedHex: sealed).utf8)
-            }
+            // KaPosts tips are not in KaChat Chess: no payment carries one.
+            let tipPayload: Data? = nil
             let tx: KaspaRpcTransaction
             if fromChattingAddress {
                 tx = try KasiaTransactionBuilder.buildPaymentTx(
@@ -3364,13 +3345,7 @@ extension ChatService {
     /// one (signed, naming the post), so it is built the same way with a stand-in signature of
     /// the real length instead of asking for one (AND-041).
     private func estimationPayload(note: String, amount: UInt64, recipientPublicKey: Data, tip: KaPostTip?) throws -> Data {
-        guard let tip else {
-            return try KasiaTransactionBuilder.buildPaymentPayload(message: note, amount: amount, recipientPublicKey: recipientPublicKey)
-        }
-        let sealed = try KasiaTransactionBuilder.sealedPaymentHex(message: note, amount: amount, recipientPublicKey: recipientPublicKey)
-        let pubkey = (try? KaPostsAPIClient.shared.requesterPubkey()) ?? String(repeating: "0", count: 66)
-        return Data(KaPostsProtocol.tipPayload(pubkey: pubkey, signature: String(repeating: "0", count: 128), postId: tip.postId,
-                                               authorPubkey: tip.authorPubkey, sealedHex: sealed).utf8)
+        try KasiaTransactionBuilder.buildPaymentPayload(message: note, amount: amount, recipientPublicKey: recipientPublicKey)
     }
 
     /// The base (Normal) fee; a Fast / Priority / custom extra goes on top (see the Send KAS sheet).

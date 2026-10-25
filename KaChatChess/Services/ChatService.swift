@@ -405,7 +405,7 @@ final class ChatService: ObservableObject {
     /// Every three minutes while group traffic is arriving live (the indexer poll, or the
     /// block stream; the catch-up then only covers gaps), every minute while it is not.
     var foregroundGroupCatchUpInterval: TimeInterval {
-        GroupChatService.shared.isLiveDeliveryActive ? 180.0 : 60.0
+        60.0
     }
     /// The one-shot 4-phase initial sync started by `startPolling`. Tracked so wallet transitions
     /// (import/switch/logout) can cancel it - otherwise the previous wallet's historical sync keeps
@@ -463,7 +463,6 @@ final class ChatService: ObservableObject {
         AppLog.log("%@", "[ChatService] Onboarding finished, starting deferred sync")
         guard startSync else { return }
         startPolling()
-        Task { await GroupChatService.shared.performCatchUpSync() }
     }
 
     func setInitialSyncPhase(_ phase: InitialSyncPhase?) {

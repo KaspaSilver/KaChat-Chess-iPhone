@@ -3524,12 +3524,6 @@ struct GroupMember: Codable, Identifiable, Equatable, Hashable {
     let xOnlyPubKeyHex: String
     var isAdmin: Bool
     var displayName: String?
-
-    /// SHA256(address) hex - matches the on-chain `sender_id` field, used to attribute
-    /// incoming gcomm messages to a roster entry.
-    var senderIdHex: String {
-        GroupCipher.deriveSenderId(senderAddress: address).hexString
-    }
 }
 
 /// Local secret+state bag for a group, persisted in Keychain (device-specific, SE-wrapped,

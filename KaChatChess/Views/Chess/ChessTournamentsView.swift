@@ -597,8 +597,7 @@ struct ChessLeaderboardRows: View {
     let mode: ChessTournamentsView.Mode
     @ObservedObject private var service = ChessTournamentService.shared
     @EnvironmentObject private var walletManager: WalletManager
-    /// The player whose row was tapped: the same User Info sheet a public chat opens from an
-    /// avatar's View Profile.
+    /// The player whose row was tapped, for their card (`ChessPlayerView`).
     @State private var profileContact: Contact?
     @State private var period: ChessLeaderboardPeriod = .month
 
@@ -707,12 +706,7 @@ struct ChessLeaderboardRows: View {
         )) {
             if let contact = profileContact {
                 NavigationStack {
-                    ChatInfoView(
-                        contact: Binding(
-                            get: { profileContact ?? contact },
-                            set: { profileContact = $0 }
-                        )
-                    )
+                    ChessPlayerView(address: contact.address)
                 }
             }
         }

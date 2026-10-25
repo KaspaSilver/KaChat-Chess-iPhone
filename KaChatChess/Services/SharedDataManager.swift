@@ -103,31 +103,6 @@ final class SharedDataManager {
         // see a new stamp over an old list.
         sharedDefaults?.set(WalletManager.shared.currentWallet?.publicAddress, forKey: Keys.contactsWallet)
         AppLog.log("[SharedData] Synced %d contacts to shared container", contacts.count)
-        syncCallContactsForIntents()
-    }
-
-    /// Whether calls are on for `address` (Chat Info's "Allow calls"), read from the shared list
-    /// without the wallet loaded - what a VoIP push that just launched the app decides by
-    /// before anything rings. nil when the list was never written (no answer yet).
-    static func isCallAllowed(_ address: String) -> Bool? {
-        guard let data = sharedDefaults?.data(forKey: Keys.callContacts),
-              let list = try? JSONSerialization.jsonObject(with: data) as? [[String: String]] else { return nil }
-        let target = address.lowercased()
-        return list.contains { ($0["address"] ?? "").lowercased() == target }
-    }
-
-    /// The callable contacts, for the Intents extension. Refreshed with the contact list.
-    @MainActor
-    static func syncCallContactsForIntents() {
-        let callable: [[String: String]] = ContactsManager.shared.contacts.compactMap { contact in
-            guard contact.callsEnabled == true else { return nil }
-            return [
-                "address": contact.address,
-                "name": ContactsManager.shared.displayName(for: contact)
-            ]
-        }
-        guard let data = try? JSONSerialization.data(withJSONObject: callable) else { return }
-        sharedDefaults?.set(data, forKey: Keys.callContacts)
     }
 
     // MARK: - Recent Conversations (Share Extension direct targets)
@@ -176,74 +151,7 @@ final class SharedDataManager {
         }
     }
 
-    // MARK: - Group Sync
-
-    /// Sync group rosters to the shared container for the notification extension. The NSE has no
-    /// Core Data access (that's where `GroupStore` lives), so this is the only way it can learn
-    /// which members belong to which group - needed to recompute candidate `blinded_group_id`s
-    /// and identify an incoming `group_message` push's sender. Group *secrets* (blindingKey,
-    /// groupRootEpoch) are deliberately not duplicated here - the NSE already reads those
-    /// straight from `GroupBag` via the Keychain access group both targets already share.
-    @MainActor
-    static func syncGroupsForExtension() {
-        let groups = GroupChatService.shared.groups.map { group in
-            SharedGroup(
-                groupId: group.id,
-                name: group.name,
-                adminAddress: group.adminAddress,
-                members: group.members.map { SharedGroupMember(address: $0.address, xOnlyPubKeyHex: $0.xOnlyPubKeyHex, displayName: $0.displayName) }
-            )
-        }
-
-        guard let data = try? JSONEncoder().encode(groups) else {
-            AppLog.log("[SharedData] Failed to encode groups")
-            return
-        }
-
-        sharedDefaults?.set(data, forKey: Keys.groups)
-        AppLog.log("[SharedData] Synced %d groups to shared container", groups.count)
-
-        // Groups with "Only Notify if I'm Mentioned" on - the NSE checks this after decrypting a
-        // group_message push, to decide whether to suppress it when the text doesn't mention the
-        // wallet's own address (already shared separately via `syncWalletAddressForExtension`).
-        // The five KaPosts switches, so the extension can drop a push the reader turned off.
-        let s = AppSettings.load()
-        sharedDefaults?.set([
-            "likes": s.kaPostsNotifyLikes,
-            "dislikes": s.kaPostsNotifyDislikes,
-            "comments": s.kaPostsNotifyComments,
-            "reposts": s.kaPostsNotifyReposts,
-            "follows": s.kaPostsNotifyFollows,
-            "mentions": s.kaPostsNotifyMentions,
-        ], forKey: Keys.kaPostsNotificationKinds)
-        if let silentData = try? JSONEncoder().encode(GroupChatService.shared.groupSilentNotifications) {
-            sharedDefaults?.set(silentData, forKey: Keys.groupSilentNotifications)
-        }
-        if let mentionsData = try? JSONEncoder().encode(GroupChatService.shared.groupMentionsOnlyNotifications) {
-            sharedDefaults?.set(mentionsData, forKey: Keys.groupMentionsOnlyNotifications)
-        }
-
-        syncOwnGroupTxIdsForExtension()
-        syncOwnKNSDomainForExtension()
-    }
-
-    /// The wallet's own recent outgoing group-message txIds. A group reaction envelope carries
-    /// its target's txId, so with this list the NSE can apply the mentions-only rule's personal
-    /// exception - a reaction to MY message still notifies in a mentions-only group - and word
-    /// the banner "to your message" when it knows the target is mine. Refreshed on every group
-    /// sync, at wallet load (once history is in memory), and when an outgoing send resolves to
-    /// its real txId.
-    @MainActor
-    static func syncOwnGroupTxIdsForExtension() {
-        // From the store, not from memory: every group's full history is no longer resident (see
-        // `GroupStore.messageRows(forGroup:newestLimit:)`), and a list built from the windowed
-        // arrays would drop older own messages - a reaction to one would then stop being flagged
-        // as personal in the push path. Fire-and-forget so the call sites stay synchronous.
-        Task {
-            let txIds = await GroupStore.shared.ownOutgoingTxIds(limit: 500)
-            sharedDefaults?.set(txIds, forKey: Keys.groupOwnTxIds)
-        }
-    }
+    // MARK: - KNS
 
     /// The wallet's own primary KNS domain (bare, lowercased) for the extension's mentions-only
     /// gate: Android's composer writes mentions as `@{primaryKNSDomain}` in the wire plaintext
@@ -262,15 +170,6 @@ final class SharedDataManager {
         } else {
             sharedDefaults?.removeObject(forKey: Keys.ownPrimaryKNSDomain)
         }
-    }
-
-    /// Get all groups from shared container (called from notification extension)
-    static func getAllGroups() -> [SharedGroup] {
-        guard let data = sharedDefaults?.data(forKey: Keys.groups),
-              let groups = try? JSONDecoder().decode([SharedGroup].self, from: data) else {
-            return []
-        }
-        return groups
     }
 
     /// Sync notification defaults used by the notification service extension.
@@ -511,92 +410,6 @@ final class SharedDataManager {
 
     // MARK: - Outbound Shares (Share Extension -> Main App)
 
-    static func enqueueOutboundShare(contactAddress: String, text: String, autoSend: Bool = true) -> SharedOutboundShare? {
-        let cleanedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanedText.isEmpty else { return nil }
-
-        let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
-        var shares = getOutboundShares()
-            .filter { nowMs - $0.createdAtMs <= SharedOutboundShare.maxAgeMs }
-
-        let share = SharedOutboundShare(
-            id: UUID().uuidString,
-            contactAddress: contactAddress,
-            text: cleanedText,
-            createdAtMs: nowMs,
-            autoSend: autoSend
-        )
-        shares.append(share)
-
-        if shares.count > SharedOutboundShare.maxStoredItems {
-            shares = Array(shares.suffix(SharedOutboundShare.maxStoredItems))
-        }
-
-        guard let data = try? JSONEncoder().encode(shares) else {
-            AppLog.log("[SharedData] Failed to encode outbound shares")
-            return nil
-        }
-
-        sharedDefaults?.set(data, forKey: Keys.outboundShares)
-        return share
-    }
-
-    static func outboundShareImageFileURL(for image: SharedOutboundShare.ImageAttachment) -> URL? {
-        guard let sharedContainerURL else { return nil }
-        return sharedContainerURL.appendingPathComponent(image.relativePath, isDirectory: false)
-    }
-
-    static func getOutboundShare(id: String) -> SharedOutboundShare? {
-        getOutboundShares().first { $0.id == id }
-    }
-
-    static func getOutboundShares() -> [SharedOutboundShare] {
-        guard let data = sharedDefaults?.data(forKey: Keys.outboundShares),
-              let shares = try? JSONDecoder().decode([SharedOutboundShare].self, from: data) else {
-            return []
-        }
-        return shares
-    }
-
-    static func removeOutboundShare(id: String) {
-        let shares = getOutboundShares()
-        if let share = shares.first(where: { $0.id == id }) {
-            removeOutboundShareFiles(for: share)
-        }
-        let filtered = shares.filter { $0.id != id }
-        if filtered.isEmpty {
-            sharedDefaults?.removeObject(forKey: Keys.outboundShares)
-            return
-        }
-        if let data = try? JSONEncoder().encode(filtered) {
-            sharedDefaults?.set(data, forKey: Keys.outboundShares)
-        }
-    }
-
-    static func pruneOutboundShares() {
-        let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
-        let shares = getOutboundShares()
-        let filtered = shares.filter { nowMs - $0.createdAtMs <= SharedOutboundShare.maxAgeMs }
-        let expired = shares.filter { nowMs - $0.createdAtMs > SharedOutboundShare.maxAgeMs }
-        expired.forEach(removeOutboundShareFiles)
-        if filtered.isEmpty {
-            sharedDefaults?.removeObject(forKey: Keys.outboundShares)
-            return
-        }
-        if let data = try? JSONEncoder().encode(filtered) {
-            sharedDefaults?.set(data, forKey: Keys.outboundShares)
-        }
-    }
-
-    private static func removeOutboundShareFiles(for share: SharedOutboundShare) {
-        guard share.image != nil,
-              let sharedContainerURL else { return }
-        let directory = sharedContainerURL
-            .appendingPathComponent(SharedOutboundShare.ImageAttachment.rootDirectoryName, isDirectory: true)
-            .appendingPathComponent(share.id, isDirectory: true)
-        try? FileManager.default.removeItem(at: directory)
-    }
-
     // MARK: - Private Key Availability
 
     /// Check if private key is available (set by main app)
@@ -641,12 +454,6 @@ final class SharedDataManager {
                     Keys.groupSilentNotifications, Keys.groupMentionsOnlyNotifications, Keys.kaPostsNotificationKinds,
                     "kachat_portfolio_widget_store"] {
             sharedDefaults?.removeObject(forKey: key)
-        }
-        WidgetCenter.shared.reloadAllTimelines()
-        if let sharedContainerURL {
-            let outboundShareDirectory = sharedContainerURL
-                .appendingPathComponent(SharedOutboundShare.ImageAttachment.rootDirectoryName, isDirectory: true)
-            try? FileManager.default.removeItem(at: outboundShareDirectory)
         }
         AppLog.log("[SharedData] Cleared all shared data")
     }

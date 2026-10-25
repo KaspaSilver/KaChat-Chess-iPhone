@@ -727,11 +727,11 @@ final class PublicChatStore {
     }
 
     /// All active (non-tombstone) reactions for `channel`, grouped by the message they target.
-    /// Reuses `GroupStore.ReactionSnapshot` - the value shape is identical, and the shared
+    /// Reuses `ReactionSnapshot` - the value shape is identical, and the shared
     /// reaction UI (`ReactionPillView` + retry affordances) already speaks it.
-    func fetchReactions(forChannel channel: String) -> [String: [GroupStore.ReactionSnapshot]] {
+    func fetchReactions(forChannel channel: String) -> [String: [ReactionSnapshot]] {
         guard isLoaded else { return [:] }
-        var grouped: [String: [GroupStore.ReactionSnapshot]] = [:]
+        var grouped: [String: [ReactionSnapshot]] = [:]
         let context = viewContext
         context.performAndWait {
             grouped = Self.reactionSnapshots(forChannel: channel, in: context)
@@ -740,7 +740,7 @@ final class PublicChatStore {
     }
 
     /// `fetchReactions` on a background context - see `fetchEditsAsync`.
-    func fetchReactionsAsync(forChannel channel: String) async -> [String: [GroupStore.ReactionSnapshot]] {
+    func fetchReactionsAsync(forChannel channel: String) async -> [String: [ReactionSnapshot]] {
         guard isLoaded else { return [:] }
         return await withCheckedContinuation { continuation in
             container.performBackgroundTask { context in
@@ -749,9 +749,9 @@ final class PublicChatStore {
         }
     }
 
-    private static func reactionSnapshots(forChannel channel: String, in context: NSManagedObjectContext) -> [String: [GroupStore.ReactionSnapshot]] {
+    private static func reactionSnapshots(forChannel channel: String, in context: NSManagedObjectContext) -> [String: [ReactionSnapshot]] {
         let normalized = PublicChatChannelName.normalize(channel)
-        var grouped: [String: [GroupStore.ReactionSnapshot]] = [:]
+        var grouped: [String: [ReactionSnapshot]] = [:]
         let request = NSFetchRequest<CDPublicChatReaction>(entityName: CDPublicChatReaction.entityName)
         request.predicate = NSPredicate(format: "channelName == %@", normalized)
         guard let results = try? context.fetch(request) else { return grouped }
@@ -763,7 +763,7 @@ final class PublicChatStore {
             case "pending": status = .pending
             default: status = .sent
             }
-            let snapshot = GroupStore.ReactionSnapshot(
+            let snapshot = ReactionSnapshot(
                 targetTxId: record.targetTxId,
                 reactorAddress: record.reactorAddress,
                 emoji: emoji,
@@ -1114,4 +1114,22 @@ final class CDPublicChatReaction: NSManagedObject {
     @NSManaged var blockTime: Int64
     @NSManaged var deliveryStatus: String?
     @NSManaged var failedAction: String?
+}
+
+/// One reaction on a public chat message, as the store hands them to the service. KaChat
+/// shared this shape with group chats (`GroupStore.ReactionSnapshot`); here it stands alone.
+struct ReactionSnapshot: Identifiable, Equatable {
+    var id: String { "\(targetTxId)-\(reactorAddress)" }
+    let targetTxId: String
+    let reactorAddress: String
+    let emoji: String
+    /// Send state of the local user's own reaction (`.sent` for everyone else's / delivered).
+    /// `.failed` drives the error icon on the pill and the Retry under the message.
+    var deliveryStatus: ChatMessage.DeliveryStatus = .sent
+    /// When `.failed`, whether the failed change was an "add" or "remove" — so Retry re-attempts
+    /// the correct action.
+    var failedAction: String? = nil
+    /// Reaction creation time (ms since epoch). Used to drop the green "sent" checkmark after a
+    /// short window (the checkmark is a recent-confirmation, not a permanent badge).
+    var blockTime: Int64 = 0
 }

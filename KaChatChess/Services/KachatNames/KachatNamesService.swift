@@ -215,7 +215,7 @@ final class KachatNamesService: ObservableObject {
         let mine = KachatNames.Codec.p2pkScript(me)
         // never a coin a scheduled KaPost will spend (IOS-064): quotes, plans and submits all
         // fund from here, so they see the same coins
-        let free = KaPostsScheduledStore.filterReserved(utxos)
+        let free = utxos
         return KasiaTransactionBuilder.spendableForBuild(free, virtualDaaScore: virtualDaaScore).compactMap { u in
             guard u.covenantId == nil, u.scriptPublicKey == mine else { return nil }
             return try? convert(u)
@@ -382,7 +382,7 @@ final class KachatNamesService: ObservableObject {
         }
         guard (object["v"] as? NSNumber)?.intValue == 1 else { throw ServiceError.badProfile("\"v\" must be 1") }
         let payload = KachatNames.Codec.profilePayload(json: json)
-        let plain = KaPostsScheduledStore.filterReserved(utxos).filter { $0.covenantId == nil }
+        let plain = utxos.filter { $0.covenantId == nil }
         return try KasiaTransactionBuilder.buildPayloadSelfSendTx(
             from: address, senderPrivateKey: privateKey, utxos: plain, payload: payload
         )

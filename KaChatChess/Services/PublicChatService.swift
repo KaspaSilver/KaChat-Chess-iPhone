@@ -89,11 +89,11 @@ final class PublicChatService: ObservableObject {
     @Published private(set) var channels: [PublicChatChannel] = []
     @Published private(set) var messagesByChannel: [String: [PublicChatMessage]] = [:]
     /// This wallet's public chat reactions, keyed by channel then by targetTxId - mirrors
-    /// `GroupChatService.reactionsByGroupId`'s shape (and reuses `GroupStore.ReactionSnapshot`,
+    /// `GroupChatService.reactionsByGroupId`'s shape (and reuses `ReactionSnapshot`,
     /// see `PublicChatStore.fetchReactions`). Loaded per channel on open (`acquire`) and kept
     /// live afterward by `sendPublicChatReaction` / the incoming-reaction interception in
     /// `processPublicChatHits` and `fetchFromIndexerAndMerge`.
-    @Published private(set) var reactionsByChannel: [String: [String: [GroupStore.ReactionSnapshot]]] = [:]
+    @Published private(set) var reactionsByChannel: [String: [String: [ReactionSnapshot]]] = [:]
     /// The newest edit per message txId, per room - see `MessageEditCodec`.
     @Published private(set) var editsByChannel: [String: [String: MessageEditSnapshot]] = [:]
     /// The room message whose text the composer is editing (the user's own) - see `sendPublicChatEdit`.
@@ -153,7 +153,6 @@ final class PublicChatService: ObservableObject {
                 guard let self else { return }
                 self.objectWillChange.send()
                 self.updateScanningStateIfNeeded()
-                Task { await PushNotificationManager.shared.updateWatchedAddresses() }
             }
             .store(in: &cancellables)
     }
@@ -543,7 +542,6 @@ final class PublicChatService: ObservableObject {
         // Indexed channels' bells also gate remote push - sync the registration so the push
         // service starts/stops sending for this channel.
         if Self.isIndexerTracked(name) {
-            Task { await PushNotificationManager.shared.updateWatchedAddresses() }
         }
         store.setNotifyEnabled(enabled, forChannel: name)
         refreshChannels()
@@ -630,7 +628,6 @@ final class PublicChatService: ObservableObject {
     /// the push service stops (or resumes) sending for that sender.
     private func syncHiddenSendersToPushIfNeeded(channel: String) {
         guard Self.isIndexerTracked(channel) else { return }
-        Task { await PushNotificationManager.shared.updateWatchedAddresses() }
     }
 
     // MARK: - Live viewing (reference counted)
@@ -856,20 +853,6 @@ final class PublicChatService: ObservableObject {
             if prune { await store.pruneExpiredMessages() }
             loadMessages(for: channel)
         }
-        // Global notification center: live (session-gated) incoming channel messages. The
-        // center dedupes by txId, so re-serving the same history every poll is a no-op.
-        // The center stores the body verbatim, so hand it the FRIENDLY preview rather than
-        // the raw wire content: a public chat reply/voice/photo/chess message is a JSON
-        // envelope (`MessageReplyCodec` and friends) and would otherwise show as raw JSON
-        // in the bell list. Same call the scan-driven local banner already makes below in
-        // `notifyIfEnabled`.
-        for row in rows {
-            GlobalNotificationCenter.shared.recordPublicChatIfLive(
-                channel: channel, senderAddress: row.senderAddress,
-                content: MessageReplyCodec.previewText(for: row.content),
-                txId: row.id, blockTime: row.blockTime
-            )
-        }
     }
 
 
@@ -914,7 +897,7 @@ final class PublicChatService: ObservableObject {
     }
 
     /// Aggregated reactions for a channel, keyed by the reacted-to message's txId.
-    func reactions(forChannel name: String) -> [String: [GroupStore.ReactionSnapshot]] {
+    func reactions(forChannel name: String) -> [String: [ReactionSnapshot]] {
         reactionsByChannel[PublicChatChannelName.normalize(name)] ?? [:]
     }
 

@@ -265,11 +265,6 @@ final class ContactsManager: ObservableObject {
         balanceLastFetch = [:]
         balanceFetchInFlight = []
         loadContacts()
-        // Right after the contacts load: its one-time migration reads their old phone-contact names.
-        AddressBookManager.shared.setActiveWalletAddress(normalizedAddress)
-        // The coins scheduled KaPosts hold, for every builder from launch on - not first when
-        // the KaPosts page renders, and never the previous wallet's (IOS-064).
-        KaPostsScheduledStore.shared.reloadForCurrentWallet()
         loadDeletedAddresses()
 
         if normalizedAddress == nil {
@@ -288,7 +283,6 @@ final class ContactsManager: ObservableObject {
         }
         if updatePush {
             Task {
-                await PushNotificationManager.shared.updateWatchedAddresses()
             }
         }
     }
@@ -550,16 +544,14 @@ final class ContactsManager: ObservableObject {
     func displayName(for address: String) -> String {
         if isOwnChattingAddress(address) { return identityName(for: address) }
         if let assigned = getContact(byAddress: address)?.assignedName { return assigned }
-        if let saved = AddressBookManager.shared.entry(for: address)?.customName { return saved }
         return identityName(for: address)
     }
 
     /// Same rule, when the caller already has the `Contact` in hand. A name you gave the chat
-    /// wins; then the address's Address Book name; then who it is on chain.
+    /// wins; then who it is on chain.
     func displayName(for contact: Contact) -> String {
         if isOwnChattingAddress(contact.address) { return identityName(for: contact.address) }
         if let assigned = contact.assignedName { return assigned }
-        if let saved = AddressBookManager.shared.entry(for: contact.address)?.customName { return saved }
         return identityName(for: contact.address)
     }
 
@@ -849,7 +841,6 @@ final class ContactsManager: ObservableObject {
         let workItem = DispatchWorkItem { [weak self] in
             self?.lastPushUpdateAt = Date()
             Task {
-                await PushNotificationManager.shared.updateWatchedAddresses()
             }
         }
         pushUpdateWorkItem = workItem

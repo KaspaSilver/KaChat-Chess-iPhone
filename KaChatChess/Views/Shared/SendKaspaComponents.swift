@@ -36,8 +36,6 @@ struct SendRecipientCard: View {
     var selectedTLD: NameServiceTLD? = nil
     var onSelectResolution: (NameResolution) -> Void = { _ in }
 
-    @ObservedObject private var addressBook = AddressBookManager.shared
-    @State private var showAddressBook = false
 
     private var trimmed: String { input.trimmingCharacters(in: .whitespacesAndNewlines) }
 
@@ -82,24 +80,8 @@ struct SendRecipientCard: View {
                     .buttonStyle(.plain)
                     .foregroundColor(.accentColor)
                     .accessibilityLabel(Text("Scan QR"))
-                    if !addressBook.entries.isEmpty {
-                        Button {
-                            showAddressBook = true
-                        } label: {
-                            Image(systemName: "book.closed")
-                                .font(.body.weight(.semibold))
-                        }
-                        .buttonStyle(.plain)
-                        .foregroundColor(.accentColor)
-                        .accessibilityLabel(Text("Address Book"))
-                    }
                 }
                 AddressResolutionCard(address: resolvedAddress ?? (isValidAddress ? trimmed : nil), domain: resolvedName)
-                if let savedName = addressBook.entry(for: resolvedAddress ?? trimmed)?.customName {
-                    Label(savedName, systemImage: "book.closed.fill")
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(.accentColor)
-                }
                 if !trimmed.isEmpty {
                     statusLine
                     if !isResolving {
@@ -111,9 +93,6 @@ struct SendRecipientCard: View {
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(sendKaspaGlass(cornerRadius: 20))
-        .fullScreenCover(isPresented: $showAddressBook) {
-            AddressBookPickerSheet { entry in input = entry.address }
-        }
     }
 
     @ViewBuilder
@@ -224,7 +203,7 @@ struct OtherDomainsDropdown: View {
 /// converted value) and Max under it. Hands the screen the KAS amount text after every edit.
 struct KaspaAmountEntry: View {
     @ObservedObject var fiatAmountState: KaspaFiatAmountState
-    @ObservedObject private var portfolio = PortfolioViewModel.shared
+    @ObservedObject private var priceStore = KaspaPriceStore.shared
     /// Receives the amount in KAS (as text) after each edit - what the screen stores.
     let onAmountChange: (String) -> Void
     /// Cleans what was typed before it's used: by default digits and one decimal point, with
@@ -243,7 +222,7 @@ struct KaspaAmountEntry: View {
     var body: some View {
         let display = Self.grouped(fiatAmountState.displayText)
         let fontSize: CGFloat = display.count <= 7 ? 52 : (display.count <= 10 ? 40 : 30)
-        let price = portfolio.currentPriceUsd
+        let price = priceStore.currentPriceUsd
         VStack(spacing: 10) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 TextField(
@@ -264,7 +243,7 @@ struct KaspaAmountEntry: View {
                 .focused($isFocused)
                 .accessibilityLabel(Text(KaspaUnit.label(AppLocalization.string("Amount (KAS)"))))
 
-                Text(verbatim: fiatAmountState.isFiatMode ? portfolio.currentCurrency.code : KaspaUnit.symbol)
+                Text(verbatim: fiatAmountState.isFiatMode ? priceStore.currentCurrency.code : KaspaUnit.symbol)
                     .font(.system(size: fontSize * 0.55, weight: .semibold, design: .rounded))
                     .foregroundColor(.secondary)
             }
@@ -280,10 +259,10 @@ struct KaspaAmountEntry: View {
                         HStack(spacing: 6) {
                             Image(systemName: "arrow.up.arrow.down")
                                 .font(.caption.weight(.semibold))
-                            if let conversion = fiatAmountState.conversionLabelText(priceInCurrency: price, currency: portfolio.currentCurrency) {
+                            if let conversion = fiatAmountState.conversionLabelText(priceInCurrency: price, currency: priceStore.currentCurrency) {
                                 Text(verbatim: conversion)
                             } else {
-                                Text(verbatim: fiatAmountState.isFiatMode ? KaspaUnit.symbol : portfolio.currentCurrency.code)
+                                Text(verbatim: fiatAmountState.isFiatMode ? KaspaUnit.symbol : priceStore.currentCurrency.code)
                             }
                         }
                         .font(.caption)

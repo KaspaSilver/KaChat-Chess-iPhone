@@ -28,3 +28,20 @@ func formatKasAmountPlain(_ value: Double) -> String {
     if text.hasSuffix(".") { text.removeLast() }
     return text
 }
+
+extension KaspaUnit {
+    /// "35 KAS", "0.2 KAS", "1.99831 KAS": exact, trailing zeros dropped.
+    static func amount(_ sompi: UInt64) -> String {
+        "\(plain(sompi)) \(symbol)"
+    }
+
+    /// "35", "0.2", "1.99831": the KAS amount, exact, trailing zeros dropped.
+    static func plain(_ sompi: UInt64) -> String {
+        let whole = sompi / 100_000_000
+        let frac = sompi % 100_000_000
+        guard frac > 0 else { return "\(whole)" }
+        var f = String(format: "%08llu", frac)
+        while f.hasSuffix("0") { f.removeLast() }
+        return "\(whole).\(f)"
+    }
+}

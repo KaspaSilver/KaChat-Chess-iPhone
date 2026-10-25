@@ -214,14 +214,6 @@ final class KachatNamesActions: ObservableObject {
         for (index, address) in spending.sorted(by: { $0.key < $1.key }) where KachatNamesRegistry.keyOf(address) == owner {
             return .spending(index: index, address: address)
         }
-        let cold = ColdStorageManager.shared
-        for account in cold.accounts {
-            for index in 0...max(0, account.maxAddressIndex) {
-                if let address = cold.address(for: account, at: index), KachatNamesRegistry.keyOf(address) == owner {
-                    return .kasSigner(account: account.label, index: index, address: address)
-                }
-            }
-        }
         return nil
     }
 
@@ -664,7 +656,7 @@ final class KachatNamesActions: ObservableObject {
     @discardableResult
     func combineCoins(_ s: Signer) async throws -> String {
         let utxos = try await NodePoolService.shared.getUtxosByAddresses([s.address])
-        let plain = KaPostsScheduledStore.filterReserved(utxos)
+        let plain = utxos
             .filter { $0.covenantId == nil }
             .sorted { $0.amount > $1.amount }
             .prefix(KasiaTransactionBuilder.maxInputsPerTransaction)
@@ -792,15 +784,6 @@ final class KachatNamesActions: ObservableObject {
         let rate: Double
         if let exactFeerate { rate = KachatNames.safeFeerate(exactFeerate) } else { rate = try await feerate(for: fee, op: op, s: s) }
         let (txId, plan) = try await submit(op, s, maxPrice: maxPrice, maxNetworkFee: maxNetworkFee, feerate: rate)
-        // An offer you withdrew or refunded yourself isn't news in the Profile bell; the ones
-        // this app returns on its own (expired, made to an earlier owner) are.
-        switch op {
-        case .withdraw(let o) where !withdrawingOffers.contains(o.id),
-             .refund(let o) where !returningOffers.contains(o.id):
-            KachatNamesNotifier.shared.selfClosedOffers.insert(o.id)
-        default:
-            break
-        }
         switch op {
         // A name that leaves this owner takes no offers with it: the ones made to this owner
         // can never be accepted any more, so they go straight back to their buyers.
