@@ -1,12 +1,13 @@
 import SwiftUI
 
 /// The Play tab: choose your game. 1v1 or a tournament, each its own screen
-/// (`ChessTournamentsView`). If the player is
+/// (`ChessTournamentsView`), or the bots (`ChessBotsView`). If the player is
 /// already waiting or playing somewhere, that is offered first.
 struct ChessHomeView: View {
     @ObservedObject private var service = ChessTournamentService.shared
     @EnvironmentObject private var walletManager: WalletManager
     @State private var openMode: ChessTournamentsView.Mode?
+    @State private var openBots = false
 
     var body: some View {
         NavigationStack {
@@ -51,17 +52,20 @@ struct ChessHomeView: View {
                     }
 
                     gameCard(
-                        mode: .duel,
                         icon: "person.2.fill",
                         title: "1v1",
                         detail: "Play the next person who joins, or a friend by code. One game, winner takes the leaderboard point."
-                    )
+                    ) { openMode = .duel }
                     gameCard(
-                        mode: .tournament,
                         icon: "trophy.fill",
                         title: "Tournament",
                         detail: "Eight players, single elimination: quarterfinals, semifinals, final. Public rooms fill as players arrive; private ones by code."
-                    )
+                    ) { openMode = .tournament }
+                    gameCard(
+                        icon: "cpu",
+                        title: "Bots",
+                        detail: "Five bots, level 1 to 5, from Kaspa Silver to Yonatan Sompolinsky. Beat one to unlock the next. Every move on Kaspa."
+                    ) { openBots = true }
                 }
                 .padding(.bottom, 24)
             }
@@ -80,15 +84,18 @@ struct ChessHomeView: View {
                     ChessTournamentsView(mode: openMode)
                 }
             }
+            .navigationDestination(isPresented: $openBots) {
+                ChessBotsView()
+            }
             .onAppear { service.acquire() }
             .onDisappear { service.release() }
         }
     }
 
-    private func gameCard(mode: ChessTournamentsView.Mode, icon: String, title: String, detail: String) -> some View {
+    private func gameCard(icon: String, title: String, detail: String, open: @escaping () -> Void) -> some View {
         Button {
             Haptics.selection()
-            openMode = mode
+            open()
         } label: {
             HStack(spacing: 16) {
                 Image(systemName: icon)

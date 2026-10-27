@@ -194,3 +194,32 @@ For the full history the KaChat broadcast indexer must:
 
 Without (1) and (2) the lobby shows what the phone has scanned in-session plus whatever
 the store retains, and the leaderboard is local (both periods, same rules).
+
+## 7. Bot games (KaChat Chess)
+
+Play > Bots: five bots, level 1 to 5 (Kaspa Silver, Izio Dev, Coderofstuff, Michael Sutton,
+Yonatan Sompolinsky). Level 1 is open; each level opens when the one before it is beaten
+(kept on the phone, per address). The bot runs on the player's phone, and the game is put on
+chain as it is played:
+
+- Channel **`#chess-bots`**, not the arena - bot games are nobody else's business, and they
+  would only add rows every arena reader has to scan. Payloads are
+  `kchat:1:bcast:chess-bots:<json>`.
+- Every message is signed by the **player's** address: the player's moves and the bot's
+  replies alike (the bot has no key). So a bot game costs the player one transaction per
+  ply, both sides - about 0.0017 KAS each.
+- Sends go one at a time, in order. The bot replies only once the player's move is on
+  chain, and the player moves only once the bot's is; a failed send holds the game until
+  Retry. The chain therefore always holds the game up to the board.
+
+| `a` | Fields | Meaning |
+|---|---|---|
+| `start` | `g`, `bot` (1...5), `c` (`"w"` or `"b"`, the player's colour) | A new game against bot level `bot`. |
+| `move` | `g`, `n`, `from`, `to`, `promo`? | Ply `n` (1 = white's first), whichever side made it - `n` and `c` say whose. |
+| `resign` | `g` | The player resigned. |
+
+`type` is `"chess_bot"`, `v` is `1`, `g` is the game id (a lowercase UUID). Checkmate,
+stalemate, insufficient material, fifty moves and threefold repetition are not sent: they
+follow from the moves. There is no clock. Bot games do not count toward the leaderboard.
+
+Example: `{"a":"move","from":"g8","g":"3b0f…","n":2,"to":"f6","type":"chess_bot","v":1}`

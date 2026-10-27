@@ -12,7 +12,8 @@ leaderboard from the KaChat indexer's `/chess/leaderboard`).
 ## The app
 
 - **Play**: 1v1 (the public room taking players, or a friend by code) and Tournaments,
-  each with Active and Finished games to watch.
+  each with Active and Finished games to watch; and Bots, a ladder of five bots (level 1
+  to 5) whose games go on chain move by move too (ONLINE_CHESS.md §7).
 - **Leaderboard**: 1v1 games and tournaments, this month and all time.
 - **Wallet**: the one address every move is signed by: balance, history, UTXOs, Receive
   and Send.
