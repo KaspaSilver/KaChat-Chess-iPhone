@@ -21,6 +21,7 @@ struct ChattingAddressManageView: View {
 
     @EnvironmentObject var chatService: ChatService
     @EnvironmentObject var settingsViewModel: SettingsViewModel
+    @EnvironmentObject var walletManager: WalletManager
 
     private enum Tab: String, CaseIterable {
         case transactions = "History"
@@ -49,8 +50,17 @@ struct ChattingAddressManageView: View {
     @State private var renamingUtxo: UTXO?
     @State private var renameUtxoText = ""
 
+    /// The live balance when this is the signed-in address: WalletManager follows the node's
+    /// UTXO notifications, so a payment shows the moment it lands. This screen's own UTXO fetch
+    /// is taken only when it appears (and on pull to refresh), so summing it alone left the
+    /// balance at whatever it was then - while History, refetched, already showed the payment.
+    private var liveBalanceSompi: UInt64? {
+        guard let wallet = walletManager.currentWallet, wallet.publicAddress == address else { return nil }
+        return wallet.balanceSompi
+    }
+
     private var balanceSompi: UInt64 {
-        utxos.reduce(UInt64(0)) { $0 + $1.amount }
+        liveBalanceSompi ?? utxos.reduce(UInt64(0)) { $0 + $1.amount }
     }
 
     private func outpointKey(_ utxo: UTXO) -> String {
@@ -198,6 +208,17 @@ struct ChattingAddressManageView: View {
             utxoLabels = WalletManager.shared.loadSpendingUtxoLabels(address: address)
             await loadTransactions()
             await loadUtxos()
+        }
+        // The coins moved (a payment in, a move or send out): the UTXOs and History follow. The
+        // history comes from the indexer, which can be a moment behind the node, so it is asked
+        // again a few seconds later.
+        .onChange(of: liveBalanceSompi) { _ in
+            Task {
+                await loadUtxos()
+                await loadTransactions()
+                try? await Task.sleep(nanoseconds: 4_000_000_000)
+                await loadTransactions()
+            }
         }
     }
 
@@ -394,6 +415,8 @@ struct ChattingAddressManageView: View {
         do {
             utxos = try await NodePoolService.shared.getUtxosByAddresses([address])
             utxoLoadError = nil
+            // A fresh count is the balance: keep the app-wide one (the header above) in step.
+            walletManager.updateBalanceIfCurrentWallet(address: address, utxos: utxos)
         } catch {
             // The list keeps what it had; an outage is not an empty address.
             utxoLoadError = UserFacingError.message(for: error)
