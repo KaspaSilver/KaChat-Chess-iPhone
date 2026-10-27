@@ -1,7 +1,8 @@
 # KaChat Chess app icon
 
-A chess king in KaChat teal with the Kaspa mark (the backward K) cut into its body, standing on
-a strip of board. The backward K is the same drawing as KaPosts' and KaChat Wallet's icons.
+A game controller in KaChat teal with the Kaspa mark (the backward K) cut into its middle, a
+D-pad on the left and four buttons on the right. The backward K is the same drawing as KaPosts'
+and KaChat Wallet's icons.
 `python3 make_chess_icon.py` writes `kachat-chess-light.svg`, `kachat-chess-dark.svg` and
 `kachat-chess-tinted.svg`. Render each at 1024x1024 and save it opaque (no alpha) into
 `KaChatChess/Resources/Assets.xcassets/AppIcon.appiconset` (`white.png`, `dark.png`,
@@ -12,5 +13,5 @@ python3 make_chess_icon.py && qlmanage -t -s 1024 -o . kachat-chess-light.svg
 sips -s format jpeg kachat-chess-light.svg.png --out t.jpg && sips -s format png t.jpg --out white.png
 ```
 
-`KaChatChessLogo.imageset` (the sign-in screen's logo, next to "KaChat Chess") is the light icon
-at 512 px.
+`KaChatChessLogo.imageset` (the sign-in screen's logo, next to "KaChat Chess", and the privacy
+screen's) is the light icon at 512 px, with the dark icon at 512 px as its dark-mode version.

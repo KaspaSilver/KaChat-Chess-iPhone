@@ -113,11 +113,12 @@ private struct PrivacyCoverView: View {
     var body: some View {
         ZStack {
             Rectangle().fill(.ultraThinMaterial)
-            Image("KaspaLogo")
+            // The app's own icon, shaped like it is on the Home Screen.
+            Image("KaChatChessLogo")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 72, height: 72)
-                .opacity(0.9)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
         .ignoresSafeArea()
     }

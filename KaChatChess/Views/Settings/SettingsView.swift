@@ -157,8 +157,8 @@ struct ConnectionHubPage: View {
                 if settingsViewModel.selectedNetworkType != settingsViewModel.launchNetworkType {
                     Label {
                         Text(settingsViewModel.selectedNetworkType == .testnet
-                             ? LocalizedStringKey("Close KaChat Chess completely and open it again to finish switching to Testnet.")
-                             : LocalizedStringKey("Close KaChat Chess completely and open it again to finish switching back to Mainnet."))
+                             ? LocalizedStringKey("Close KaPlay completely and open it again to finish switching to Testnet.")
+                             : LocalizedStringKey("Close KaPlay completely and open it again to finish switching back to Mainnet."))
                     } icon: {
                         Image(systemName: "arrow.clockwise.circle.fill")
                             .foregroundColor(.orange)
@@ -488,6 +488,8 @@ struct KaspaExplorerSettingsView: View {
 struct ConnectionSettingsView: View {
     @EnvironmentObject var settingsViewModel: SettingsViewModel
     @Environment(\.dismiss) private var dismiss
+    /// Where .kachat names are read from right now, for the Domains tab.
+    @ObservedObject private var namesRegistry = KachatNamesRegistry.shared
 
     @State private var indexerURL: String = ""
     @State private var kaPostIndexerURL: String = ""
@@ -553,7 +555,7 @@ struct ConnectionSettingsView: View {
         } header: {
             Text("Message Indexer")
         } footer: {
-            Text("Message indexer service for chat functionality")
+            Text("Message indexer service for chat functionality. Also serves .kachat names when it has them (see the Domains tab).")
         }
 
         Section {
@@ -767,10 +769,42 @@ struct ConnectionSettingsView: View {
                         .foregroundColor(.secondary)
                 }
             }
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Source")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                switch namesRegistry.source {
+                case .indexer(let base):
+                    Text(base)
+                        .font(.system(.body, design: .monospaced))
+                        .foregroundColor(.secondary)
+                        .textSelection(.enabled)
+                case .chain:
+                    Text("Read straight from the chain")
+                        .foregroundColor(.secondary)
+                    Text("The Message Indexer doesn't serve .kachat names on this network, or is behind.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                case nil:
+                    Text("Checking...")
+                        .foregroundColor(.secondary)
+                }
+            }
+            Button {
+                selectedTab = .indexer
+            } label: {
+                Label("Change on the Indexer tab", systemImage: "arrow.right.circle")
+            }
         } header: {
             Text(".kachat Names")
         } footer: {
-            Text("Resolved first, everywhere you can type an address.")
+            Text("Resolved first, everywhere you can type an address. Names come from the Message Indexer on the Indexer tab when it serves them and is caught up, otherwise straight from the chain. Run your own indexer and put its URL there to use it.")
+        }
+        .task {
+            // The source is picked on first use; pick it now if nothing has asked yet.
+            if KachatNamesService.isLaunched, namesRegistry.source == nil {
+                _ = try? await namesRegistry.prepare()
+            }
         }
         // The other name services this app reads (see `NameServicesClient`). Shown, not
         // editable. The .kas URL had no empty-string fallback, so saving it blank wrote "" and
@@ -969,6 +1003,7 @@ struct ConnectionSettingsView: View {
         // empty base URL builds a request that fails as "unsupported URL" and reads as the
         // server being down, which is exactly how the KNS field broke.
         let defaults = ConnectionProfile.defaults(for: settingsViewModel.settings.networkType)
+        let previousIndexerURL = settingsViewModel.settings.indexerURL
         settingsViewModel.settings.indexerURL = normalizedOrDefault(indexerURL, defaults.indexerURL)
         settingsViewModel.settings.kaPostIndexerURL = normalizedOrDefault(kaPostIndexerURL, defaults.kaPostIndexerURL)
         settingsViewModel.settings.translationServiceURL = normalizedOrDefault(translationServiceURL, defaults.translationServiceURL)
@@ -976,6 +1011,10 @@ struct ConnectionSettingsView: View {
         settingsViewModel.settings.pushIndexerURL = normalizedOrDefault(pushIndexerURL, defaults.pushIndexerURL)
         settingsViewModel.settings.kaspaRestAPIURL = normalizedOrDefault(kaspaRestAPIURL, defaults.kaspaRestAPIURL)
         settingsViewModel.saveSettings()
+        // A new indexer is asked about .kachat names now, not at the next stale refresh.
+        if settingsViewModel.settings.indexerURL != previousIndexerURL {
+            Task { await KachatNamesRegistry.shared.refresh() }
+        }
         return true
     }
 

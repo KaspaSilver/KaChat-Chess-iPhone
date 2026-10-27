@@ -40,7 +40,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("KaChat Chess is built with these open source libraries. Their authors ask that these notices travel with the app.")
+                    Text("KaPlay is built with these open source libraries. Their authors ask that these notices travel with the app.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     ForEach(Self.notices) { notice in

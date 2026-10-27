@@ -43,7 +43,7 @@ struct OnboardingView: View {
                 // An overlay inside the buttons' own 40pt bottom padding, so the height budget
                 // that keeps Create and Import on screen is untouched.
                 .overlay(alignment: .bottom) {
-                    Text(verbatim: "KaChat Chess \(AppVersion.display)")
+                    Text(verbatim: "KaPlay \(AppVersion.display)")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                         .padding(.bottom, 10)
@@ -152,7 +152,7 @@ struct OnboardingView: View {
     private var titleSection: some View {
         VStack(spacing: 12) {
             HStack(spacing: 10) {
-                Text("KaChat Chess")
+                Text("KaPlay")
                     .font(.largeTitle.weight(.bold))
                 Image("KaChatChessLogo")
                     .resizable()
