@@ -8,6 +8,6 @@
   <g filter="url(#soft)"><path d="M330 300 L694 300 C800 300 858 336 880 412 C910 512 932 640 924 728 C916 806 836 832 786 784 C748 748 722 696 682 672 C604 652 420 652 342 672 C302 696 276 748 238 784 C188 832 108 806 100 728 C92 640 114 512 144 412 C166 336 224 300 330 300 Z" fill="url(#body)"/></g>
   <rect x="196" y="448.0" width="132" height="44" rx="12" fill="#FFFFFF"/><rect x="240.0" y="404" width="44" height="132" rx="12" fill="#FFFFFF"/>
   <circle cx="762" cy="422" r="23" fill="#FFFFFF"/><circle cx="810" cy="470" r="23" fill="#FFFFFF"/><circle cx="762" cy="518" r="23" fill="#FFFFFF"/><circle cx="714" cy="470" r="23" fill="#FFFFFF"/>
-  <g transform="translate(433.2 390.5) scale(1.75)"><polyline points="8,15 61,50 8,85" fill="none" stroke="#FFFFFF" stroke-width="17" stroke-miterlimit="4"/><polygon points="60,-3 77,-5 80,50 74,105 56,103 58,50" fill="#FFFFFF"/></g>
+  <g transform="translate(512 470) scale(0.4608)"><polyline points="-127,-147 64,0 -127,147" fill="none" stroke="#FFFFFF" stroke-width="78" stroke-miterlimit="4"/><polygon points="45,-206 123,-217 153,0 123,217 45,206 75,0" fill="#FFFFFF"/></g>
   </g>
 </svg>

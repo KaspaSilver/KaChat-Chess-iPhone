@@ -1,8 +1,8 @@
 # KaChat Chess app icon
 
 A game controller in KaChat teal with the Kaspa mark (the backward K) cut into its middle, a
-D-pad on the left and four buttons on the right. The backward K is the same drawing as KaPosts'
-and KaChat Wallet's icons.
+D-pad on the left and four buttons on the right. The backward K is traced from the KaChat app's
+icon (`k_mark`), so the two match.
 `python3 make_chess_icon.py` writes `kachat-chess-light.svg`, `kachat-chess-dark.svg` and
 `kachat-chess-tinted.svg`. Render each at 1024x1024 and save it opaque (no alpha) into
 `KaChatChess/Resources/Assets.xcassets/AppIcon.appiconset` (`white.png`, `dark.png`,

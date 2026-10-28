@@ -12,12 +12,14 @@ PALETTES = {
 }
 
 
-def k_mark(cx, cy, s, color):
-    # the backward K in a 0..90 x -5..105 box, centred on (cx, cy) - the same drawing as
-    # KaPosts' and KaChat Wallet's icons
-    return (f'<g transform="translate({cx - 45 * s:.1f} {cy - 50 * s:.1f}) scale({s})">'
-            f'<polyline points="8,15 61,50 8,85" fill="none" stroke="{color}" stroke-width="17" stroke-miterlimit="4"/>'
-            f'<polygon points="60,-3 77,-5 80,50 74,105 56,103 58,50" fill="{color}"/></g>')
+def k_mark(cx, cy, height, color):
+    # the backward K, traced from the KaChat app's icon (KaChat-iPhone AppIcon, where it is 434
+    # tall): a chevron stroke and a bar whose edges both bend out at the middle. Centred on
+    # (cx, cy), `height` tall.
+    s = height / 434
+    return (f'<g transform="translate({cx} {cy}) scale({s:.4f})">'
+            f'<polyline points="-127,-147 64,0 -127,147" fill="none" stroke="{color}" stroke-width="78" stroke-miterlimit="4"/>'
+            f'<polygon points="45,-206 123,-217 153,0 123,217 45,206 75,0" fill="{color}"/></g>')
 
 
 def d_pad(cx, cy, color):
@@ -62,7 +64,7 @@ def svg(variant):
   <g filter="url(#soft)"><path d="{CONTROLLER}" fill="url(#body)"/></g>
   {d_pad(262, 470, k)}
   {buttons(762, 470, k)}
-  {k_mark(512, 478, 1.75, k)}
+  {k_mark(512, 470, 200, k)}
   </g>
 </svg>'''
 
