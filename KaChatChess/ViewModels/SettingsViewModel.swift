@@ -133,21 +133,6 @@ extension AppSettings {
             AppSettingsCache.shared.set(.default)
             return .default
         }
-        // One-time migration for anyone still pointed at a superseded default indexer - the
-        // offline kasia.fyi, or the previous community default kasia.wtf now replaced by KaChat's
-        // own indexer (kachat.duckdns.org). Users who set a custom indexer keep it; only the old
-        // shipped defaults are moved.
-        if settings.indexerURL == legacyDefaultIndexerURL || settings.indexerURL == legacyDefaultIndexerURLKasiaWtf {
-            settings.indexerURL = defaultIndexerURL
-            save(settings)
-        }
-        // One-time migration for anyone still pointed at the public K social indexer
-        // (mainnet.kaspatalk.net) - KaPosts now runs on KaChat's own indexer. Users who set a
-        // custom KaPost indexer URL keep it; only the old shipped default is moved.
-        if settings.kaPostIndexerURL == legacyDefaultKaPostIndexerURL {
-            settings.kaPostIndexerURL = defaultKaPostIndexerURL
-            save(settings)
-        }
         // One-time 4.0 dock rules: EVERY existing user gets KaPosts/Public Chats enabled.
         // The decode fallbacks cover production 3.0 users (their blobs lack these keys), but
         // 4.0 TestFlight builds already wrote hideKaPostsTab = true into saved blobs via the
