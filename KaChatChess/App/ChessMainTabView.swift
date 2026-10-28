@@ -9,6 +9,13 @@ struct ChessMainTabView: View {
     @EnvironmentObject private var chatService: ChatService
     @State private var selection: Tab = .play
 
+    /// KaPay's (and KaPosts') wallet symbol; it only exists from iOS 17, so iOS 16 gets the
+    /// pass-style wallet.
+    private static var walletIcon: String {
+        if #available(iOS 17, *) { return "wallet.bifold" }
+        return "wallet.pass"
+    }
+
     var body: some View {
         TabView(selection: $selection) {
             ChessHomeView()
@@ -18,7 +25,7 @@ struct ChessMainTabView: View {
                 .tabItem { Label("Leaderboard", systemImage: "trophy.fill") }
                 .tag(Tab.leaderboard)
             ChessWalletView()
-                .tabItem { Label("Wallet", systemImage: "wallet.pass.fill") }
+                .tabItem { Label("Wallet", systemImage: Self.walletIcon) }
                 .tag(Tab.wallet)
             SettingsView()
                 .tabItem { Label("Settings", systemImage: "gearshape.fill") }
