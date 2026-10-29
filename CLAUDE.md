@@ -50,11 +50,11 @@ The project uses a file-system-synchronized folder: every file under `KaChatChes
 target automatically.
 
 ```bash
-xcodebuild -project KaChatChess.xcodeproj -scheme KaChatChess -configuration Debug -destination 'id=48DEB003-C22C-433B-80B8-8BE35D3019CC' -derivedDataPath build/DerivedData build
+xcodebuild -project KaChatChess.xcodeproj -scheme KaChatChess -configuration Debug -destination 'id=42E0A378-1265-4F60-AF20-4F7E4CAE6D4E' -derivedDataPath build/DerivedData build
 ```
 
 Claude writes the code and never tests it - no Simulator driving, screenshots or verification
 builds; the owner does all testing. "rebuild" (or "r") means build with the command above and
-install + launch on the iPhone 17 Pro simulator (`48DEB003-C22C-433B-80B8-8BE35D3019CC`, never
-the plain iPhone 17), then stop. "push" means commit and push to `main`
+install + launch on the iPhone 17 simulator (`42E0A378-1265-4F60-AF20-4F7E4CAE6D4E`, not
+the iPhone 17 Pro), then stop. "push" means commit and push to `main`
 (`KaspaSilver/KaPlay-iPhone`).
